@@ -1,22 +1,28 @@
 # grpc-web-from-object
 fromObject method for grpc-web
 
+In general that is opposite for 'toObject' method in protobufjs.
+
+## Installation
+`npm i grpc-web-from-object`
+
 ## Usage
 ```typescript
 import { createFromObject } from 'grpc-web-from-object';
 import { MyMessage } from './my-message_pb';
 import { MyInnerMessage } from './my-inner-message_pb';
 
-const fromMyMessage = createFromObject(MyMessage);
-const fromMyInnerMessage = createFromObject(MyInnerMessage);
+const fromMyMessage = createFromObject(MyMessage, {
+    keyThree: createFromObject(MyInnerMessage),
+});
 
 const myMessage = fromMyMessage({
     keyOne: 1,
     keyTwo: 'foo',
-    keyThree: fromMyInnerMessage({
+    keyThree: {
         keyA: 2,
         keyB: 'bar',
-    }),
+    },
 });
 ```
 
