@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/infodusha/grpc-web-from-object/compare/v1.1.0...v2.0.0) (2023-01-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* support repeated
+
+### Features
+
+* support repeated ([bc7f122](https://github.com/infodusha/grpc-web-from-object/commit/bc7f122994bcffd7c07d75ee60e43ac53a9f2f88))
+
 ## [1.1.0](https://github.com/infodusha/grpc-web-from-object/compare/v1.0.0...v1.1.0) (2023-01-23)
 
 
