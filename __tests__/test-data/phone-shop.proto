@@ -9,8 +9,7 @@ message Phone {
   string model = 1;
   int32 diagonal = 2;
   int32 price = 3;
-  optional int32 battery_life = 4;
-  Company company = 5;
+  Company company = 4;
 }
 
 message Company {

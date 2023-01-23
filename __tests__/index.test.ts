@@ -1,7 +1,6 @@
 import { createFromObject } from "../src";
 import { BookStore } from "./test-data/generated/book-store_pb";
-import {Company, Phone, PhoneShop} from "./test-data/generated/phone-shop_pb";
-import {StringValue} from "google-protobuf/google/protobuf/wrappers_pb";
+import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
@@ -16,8 +15,8 @@ describe('createFromObject', () => {
 
     it('Should work with nested structure', () => {
         const fromPhoneShop = createFromObject(PhoneShop, {
-            getPhone: createFromObject(Phone, {
-                getCompany: createFromObject(Company),
+            phone: createFromObject(Phone, {
+                company: createFromObject(Company),
             }),
         });
         const obj = {
