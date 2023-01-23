@@ -13,3 +13,4 @@ gen () {
 
 gen ./book-store.proto
 gen ./phone-shop.proto
+gen ./forest.proto

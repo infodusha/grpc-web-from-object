@@ -1,6 +1,7 @@
 import { createFromObject } from "../src";
 import { BookStore } from "./test-data/generated/book-store_pb";
 import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
+import { Forest, Info, Tree } from "./test-data/generated/forest_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
@@ -33,5 +34,24 @@ describe('createFromObject', () => {
         } satisfies PhoneShop.AsObject;
         const phoneShop = fromPhoneShop(obj);
         expect(phoneShop.toObject()).toEqual(obj);
+    });
+
+    it('Should work with array structure', () => {
+        const fromForest = createFromObject(Forest, {
+            treesList: createFromObject(Tree),
+            info: createFromObject(Info),
+        });
+        const obj = {
+            treesList: [
+                { age: 1, height: 10 },
+                { age: 5, height: 42 },
+            ],
+            info: {
+                name: 'Forest',
+                numberOfTrees: 4000,
+            },
+        } satisfies Forest.AsObject;
+        const forest = fromForest(obj);
+        expect(forest.toObject()).toEqual(obj);
     });
 });
