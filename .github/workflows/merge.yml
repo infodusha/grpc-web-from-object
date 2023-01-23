@@ -19,7 +19,14 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
         if: ${{ steps.release.outputs.release_created }}
+      - name: Install Protobuf
+        uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
+        if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm run generate
         if: ${{ steps.release.outputs.release_created }}
       - run: npm run test
         if: ${{ steps.release.outputs.release_created }}

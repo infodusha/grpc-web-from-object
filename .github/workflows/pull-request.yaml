@@ -12,5 +12,10 @@ jobs:
         with:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
+      - name: Install Protobuf
+        uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
       - run: npm ci
+      - run: npm run generate
       - run: npm run test
