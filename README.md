@@ -4,15 +4,20 @@ fromObject method for grpc-web
 ## Usage
 ```typescript
 import { createFromObject } from 'grpc-web-from-object';
-import { MyMessage } from './my_message_pb';
+import { MyMessage } from './my-message_pb';
+import { MyInnerMessage } from './my-inner-message_pb';
 
 const fromMyMessage = createFromObject(MyMessage);
+const fromMyInnerMessage = createFromObject(MyInnerMessage);
 
 const myMessage = fromMyMessage({
     keyOne: 1,
-    keyTwo: 'value',
+    keyTwo: 'foo',
+    keyThree: fromMyInnerMessage({
+        keyA: 2,
+        keyB: 'bar',
+    }),
 });
-
 ```
 
 ## Authors
