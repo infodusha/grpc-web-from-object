@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.2](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.1...v2.0.2) (2023-01-23)
+
+
+### Bug Fixes
+
+* simplify types ([a58adb6](https://github.com/infodusha/grpc-web-from-object/commit/a58adb6c073fcfcbf0dc9a180a4c6b3ada3adf14))
+* simplify types ([f0d8fef](https://github.com/infodusha/grpc-web-from-object/commit/f0d8fef2726deb2bf7ee762e4aa403855092f10d))
+
 ## [2.0.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.0...v2.0.1) (2023-01-23)
 
 
