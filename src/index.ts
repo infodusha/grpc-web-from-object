@@ -6,32 +6,20 @@ type MessageConstructor<T extends Message> = new () => T;
 
 type AsObject<T extends Message> = ReturnType<T["toObject"]>;
 
-type MessageReturnValue<T extends Message, Key extends keyof T> = T[Key] extends (...args: unknown[]) => infer R ? R : never;
+type MessageFnReturnValue<T extends Message, Key extends keyof T> = T[Key] extends (...args: unknown[]) => infer R ? R : never;
 
+type IsMessageOrMessageArray<T> = T extends Array<infer R> ? IsMessageOrMessageArray<R> : T extends Message | undefined ? Exclude<T, undefined> : never;
 
-type IsMessage<T> = T extends Message | undefined ? Exclude<T, undefined> : never;
-type IsMessageArray<T> = T extends Array<infer R> ? IsMessage<R> : never;
-
-type GetMessageObjectKeys<T extends Message> = {
-    [K in keyof T]: K extends `get${string}` ? IsMessage<MessageReturnValue<T, K>> extends never ? never : K : never
+type GetMessageKeys<T extends Message> = {
+    [K in keyof T]: K extends `get${string}` ? IsMessageOrMessageArray<MessageFnReturnValue<T, K>> extends never ? never : K : never
 }[keyof T];
-type GetMessageArrayKeys<T extends Message> = {
-    [K in keyof T]: K extends `get${string}` ? IsMessageArray<MessageReturnValue<T, K>> extends never ? never : K : never
-}[keyof T];
-type GetMessageKeys<T extends Message> = GetMessageObjectKeys<T> | GetMessageArrayKeys<T>;
 
 type MessageToObjectKey<T extends string> = T extends `get${infer R}` ? Uncapitalize<R> : never;
 type AsObjectToMessageKey<R> = R extends string ? `get${Capitalize<R>}` : never;
 
-type MessageObjectFactories<T extends Message> = {
-    [K in MessageToObjectKey<GetMessageObjectKeys<T>>]: FromObject<IsMessage<MessageReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>
+type MessageFactories<T extends Message> = {
+    [K in MessageToObjectKey<GetMessageKeys<T>>]: FromObject<IsMessageOrMessageArray<MessageFnReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>
 }
-
-type MessageArrayFactories<T extends Message> = {
-    [K in MessageToObjectKey<GetMessageArrayKeys<T>>]: FromObject<IsMessageArray<MessageReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>
-}
-
-type MessageFactories<T extends Message> = MessageObjectFactories<T> & MessageArrayFactories<T>;
 
 type EmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? T : never;
 type NonEmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? never : T;
@@ -69,7 +57,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
 }
 
  function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
-    const setter = getSetter(key);
+    const setter = getSetter<T>(key);
     (instance[setter] as (value: unknown) => void)(value);
 }
 
