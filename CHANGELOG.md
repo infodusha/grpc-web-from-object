@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.2...v2.0.3) (2023-02-03)
+
+
+### Bug Fixes
+
+* simple arrays support ([c85116c](https://github.com/infodusha/grpc-web-from-object/commit/c85116c179f5b3c28a3aae303bcc6c3a0efe7205))
+* throw error for extra properties ([5569b59](https://github.com/infodusha/grpc-web-from-object/commit/5569b5970fc9d451932540f3dd430377ae75f43d))
+
 ## [2.0.2](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.1...v2.0.2) (2023-01-23)
 
 
