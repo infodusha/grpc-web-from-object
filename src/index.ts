@@ -35,7 +35,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
             if (value === null) {
                 throw new Error(`Null value for key ${key}`);
             }
-            if (typeof value !== 'object' && !Array.isArray(value)) {
+            if (typeof value !== 'object') {
                 setValue(instance, key, value);
                 continue;
             }
@@ -49,7 +49,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
                     setValue(instance, key, childInstance);
                 }
             } else {
-                throw new Error(`No factory for ${key}`);
+                setValue(instance, key, value);
             }
         }
         return instance;

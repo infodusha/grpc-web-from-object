@@ -2,6 +2,7 @@ import { createFromObject } from "../src";
 import { BookStore } from "./test-data/generated/book-store_pb";
 import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 import { Forest, Info, Tree } from "./test-data/generated/forest_pb";
+import {Universe} from "./test-data/generated/universe_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
@@ -52,6 +53,15 @@ describe('createFromObject', () => {
             },
         } satisfies Forest.AsObject;
         const forest = fromForest(obj);
+        expect(forest.toObject()).toEqual(obj);
+    });
+
+    it('Should work with simple array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: ['Earth', 'Mars', 'Venus'],
+        } satisfies Universe.AsObject;
+        const forest = fromUniverse(obj);
         expect(forest.toObject()).toEqual(obj);
     });
 });
