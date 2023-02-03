@@ -64,4 +64,13 @@ describe('createFromObject', () => {
         const forest = fromUniverse(obj);
         expect(forest.toObject()).toEqual(obj);
     });
+
+    it('Should throw error for extra params', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: ['Earth', 'Mars', 'Venus'],
+            extra: 'data',
+        } as Universe.AsObject;
+        expect(() =>  fromUniverse(obj)).toThrowError(`Extra property 'extra'`);
+    });
 });

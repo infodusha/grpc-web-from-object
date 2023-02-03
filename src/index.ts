@@ -58,7 +58,11 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
 
  function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
     const setter = getSetter<T>(key);
-    (instance[setter] as (value: unknown) => void)(value);
+    if (setter in instance) {
+        (instance[setter] as (value: unknown) => void)(value);
+    } else {
+        throw new Error(`Extra property '${key}'`);
+    }
 }
 
 type SetterKey<T extends Message> = {
