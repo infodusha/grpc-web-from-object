@@ -31,6 +31,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
     const allFactories = factories ?? {} as MessageFactories<T>;
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
+        validateMissingProps(instance, data);
         for (const [key, value] of Object.entries(data)) {
             if (value === null) {
                 throw new Error(`Null value for key ${key}`);
@@ -71,4 +72,15 @@ type SetterKey<T extends Message> = {
 
 function getSetter<T extends Message>(key: string): SetterKey<T> {
     return `set${key[0].toUpperCase()}${key.slice(1)}` as SetterKey<T>;
+}
+
+function validateMissingProps<T extends Message>(instance: T, data: AsObject<T>): void {
+    const dataSetters = Object.keys(data).map((key) => getSetter<T>(key));
+    const instanceSetters = Object.keys(Object.getPrototypeOf(instance)).filter((key) => key.startsWith('set'));
+    for (const key of instanceSetters) {
+        if (!dataSetters.includes(key as SetterKey<T>) && instance['clear' + key.slice(3) as keyof T] === undefined) {
+            const prop = key.slice(3, 4).toLowerCase() + key.slice(4);
+            throw new Error(`Missing property '${prop}'`);
+        }
+    }
 }

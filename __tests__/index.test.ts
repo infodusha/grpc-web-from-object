@@ -73,4 +73,12 @@ describe('createFromObject', () => {
         } as Universe.AsObject;
         expect(() =>  fromUniverse(obj)).toThrowError(`Extra property 'extra'`);
     });
+
+    it('Should throw when lack of params', () => {
+        const fromBookStore = createFromObject(BookStore);
+        const obj = {
+            name: 'Esperanto',
+        } as BookStore.AsObject;
+        expect(() =>  fromBookStore(obj)).toThrowError(`Missing property 'shelf'`);
+    });
 });
