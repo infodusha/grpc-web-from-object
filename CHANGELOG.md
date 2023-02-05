@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.3...v2.1.0) (2023-02-05)
+
+
+### Features
+
+* validate missing factory ([9cdacd3](https://github.com/infodusha/grpc-web-from-object/commit/9cdacd3dcde582ea57b21155b8611ede259dcb23))
+* validate missing properties ([ba17bfd](https://github.com/infodusha/grpc-web-from-object/commit/ba17bfd0b6e8eed35d160be1a804a52625a22136))
+
 ## [2.0.3](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.2...v2.0.3) (2023-02-03)
 
 
