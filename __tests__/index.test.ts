@@ -81,4 +81,18 @@ describe('createFromObject', () => {
         } as BookStore.AsObject;
         expect(() =>  fromBookStore(obj)).toThrowError(`Missing property 'shelf'`);
     });
+
+    it('Should throw when missing factory', () => {
+        // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
+        const fromPhoneShop = createFromObject(PhoneShop, {});
+        const obj = {
+            id: 1,
+            phone: {
+                model: 'iPhone 14',
+                diagonal: 6.5,
+                price: 1028,
+            },
+        } satisfies PhoneShop.AsObject;
+        expect(() =>  fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
+    });
 });

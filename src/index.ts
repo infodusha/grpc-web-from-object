@@ -50,6 +50,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
                     setValue(instance, key, childInstance);
                 }
             } else {
+                validateMissingFactory(key, value);
                 setValue(instance, key, value);
             }
         }
@@ -82,5 +83,17 @@ function validateMissingProps<T extends Message>(instance: T, data: AsObject<T>)
             const prop = key.slice(3, 4).toLowerCase() + key.slice(4);
             throw new Error(`Missing property '${prop}'`);
         }
+    }
+}
+
+function validateMissingFactory(key: string, value: unknown): void {
+    if (Array.isArray(value)) {
+        for (const v of value) {
+            validateMissingFactory(key, v);
+        }
+        return;
+    }
+    if (typeof value === 'object') {
+        throw new Error(`Missing factory for '${key}'`);
     }
 }
