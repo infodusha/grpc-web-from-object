@@ -95,4 +95,10 @@ describe('createFromObject', () => {
         } satisfies PhoneShop.AsObject;
         expect(() =>  fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
     });
+
+    it('Should not throw when lack of array params', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {} as Universe.AsObject;
+        expect(() =>  fromUniverse(obj)).not.toThrowError(`Missing property 'planetsList'`);
+    });
 });
