@@ -50,7 +50,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
                     setValue(instance, key, childInstance);
                 }
             } else {
-                validateMissingFactory(key, value);
+                validateMissingFactory(instance, key, value);
                 setValue(instance, key, value);
             }
         }
@@ -84,10 +84,15 @@ function validateMissingProps<T extends Message>(instance: T, data: AsObject<T>)
     }
 }
 
-function validateMissingFactory(key: string, value: unknown): void {
+function validateMissingFactory<T extends Message>(instance: T, key: string, value: unknown): void {
+    const setter = getSetter<T>(key);
+    if (!(setter in instance)) {
+        return;
+    }
+
     if (Array.isArray(value)) {
         for (const v of value) {
-            validateMissingFactory(key, v);
+            validateMissingFactory(instance, key, v);
         }
         return;
     }

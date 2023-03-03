@@ -76,6 +76,19 @@ describe('createFromObject', () => {
         expect(universe.toObject()).toEqual({ planetsList } satisfies Universe.AsObject);
     });
 
+    it('Should ignore extra factory params', () => {
+        const fromUniverse = createFromObject(Universe);
+        const planetsList = ['Earth', 'Mars', 'Venus'];
+        const obj = {
+            planetsList,
+            more: {
+                nested: 'data',
+            },
+        } as Universe.AsObject;
+        const universe = fromUniverse(obj);
+        expect(universe.toObject()).toEqual({ planetsList } satisfies Universe.AsObject);
+    });
+
     it('Should throw when lack of params', () => {
         const fromBookStore = createFromObject(BookStore);
         const obj = {
