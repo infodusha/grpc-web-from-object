@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.0...v2.1.1) (2023-03-03)
+
+
+### Bug Fixes
+
+* do not throw when extra nested props ([380afcd](https://github.com/infodusha/grpc-web-from-object/commit/380afcd6147b24fe634618e49bf65f8957058639))
+* do not throw when extra props ([82f7917](https://github.com/infodusha/grpc-web-from-object/commit/82f79179f7dd4ea7841f048cfd4896066f80dd1d))
+
 ## [2.1.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.0.3...v2.1.0) (2023-02-05)
 
 
