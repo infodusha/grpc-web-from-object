@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.1...v2.1.2) (2023-03-03)
+
+
+### Bug Fixes
+
+* do not throw when extra null value ([f2ec6fb](https://github.com/infodusha/grpc-web-from-object/commit/f2ec6fbd5190d0fa90404527484dfa4ffd21746d))
+
 ## [2.1.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.0...v2.1.1) (2023-03-03)
 
 
