@@ -61,17 +61,19 @@ describe('createFromObject', () => {
         const obj = {
             planetsList: ['Earth', 'Mars', 'Venus'],
         } satisfies Universe.AsObject;
-        const forest = fromUniverse(obj);
-        expect(forest.toObject()).toEqual(obj);
+        const universe = fromUniverse(obj);
+        expect(universe.toObject()).toEqual(obj);
     });
 
-    it('Should throw error for extra params', () => {
+    it('Should ignore extra params', () => {
         const fromUniverse = createFromObject(Universe);
+        const planetsList = ['Earth', 'Mars', 'Venus'];
         const obj = {
-            planetsList: ['Earth', 'Mars', 'Venus'],
+            planetsList,
             extra: 'data',
         } as Universe.AsObject;
-        expect(() =>  fromUniverse(obj)).toThrowError(`Extra property 'extra'`);
+        const universe = fromUniverse(obj);
+        expect(universe.toObject()).toEqual({ planetsList } satisfies Universe.AsObject);
     });
 
     it('Should throw when lack of params', () => {

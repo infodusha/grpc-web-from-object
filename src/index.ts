@@ -62,8 +62,6 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
     const setter = getSetter<T>(key);
     if (setter in instance) {
         (instance[setter] as (value: unknown) => void)(value);
-    } else {
-        throw new Error(`Extra property '${key}'`);
     }
 }
 
