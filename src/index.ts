@@ -33,10 +33,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
         const instance = new MessageType();
         validateMissingProps(instance, data);
         for (const [key, value] of Object.entries(data)) {
-            if (value === null) {
-                throw new Error(`Null value for key ${key}`);
-            }
-            if (typeof value !== 'object') {
+            if (value === null || typeof value !== 'object') {
                 setValue(instance, key, value);
                 continue;
             }
@@ -61,6 +58,9 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
  function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
     const setter = getSetter<T>(key);
     if (setter in instance) {
+        if (value === null) {
+            throw new Error(`Null value for key '${key}'`);
+        }
         (instance[setter] as (value: unknown) => void)(value);
     }
 }

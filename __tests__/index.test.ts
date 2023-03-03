@@ -94,7 +94,7 @@ describe('createFromObject', () => {
         const obj = {
             name: 'Esperanto',
         } as BookStore.AsObject;
-        expect(() =>  fromBookStore(obj)).toThrowError(`Missing property 'shelf'`);
+        expect(() => fromBookStore(obj)).toThrowError(`Missing property 'shelf'`);
     });
 
     it('Should throw when missing factory', () => {
@@ -108,12 +108,29 @@ describe('createFromObject', () => {
                 price: 1028,
             },
         } satisfies PhoneShop.AsObject;
-        expect(() =>  fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
+        expect(() => fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
     });
 
     it('Should not throw when lack of array params', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {} as Universe.AsObject;
-        expect(() =>  fromUniverse(obj)).not.toThrowError(`Missing property 'planetsList'`);
+        expect(() => fromUniverse(obj)).not.toThrowError(`Missing property 'planetsList'`);
+    });
+
+    it('Should throw when null value', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: null,
+        } as unknown as Universe.AsObject;
+        expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
+    });
+
+    it('Should not throw when extra null value', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: ['Saturn'],
+            extra: null,
+        } as Universe.AsObject;
+        expect(() => fromUniverse(obj)).not.toThrowError(`Null value for key 'extra'`);
     });
 });
