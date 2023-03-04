@@ -30,43 +30,36 @@ const CLEAR_PREFIX = 'clear';
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T>>): FromObject<T>;
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>, factories: MessageFactories<T>): FromObject<T>
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T> | NonEmptyFactory<T>>, factories?: MessageFactories<T>): FromObject<T> {
-    const allFactories = factories ?? {};
+    const allFactories = factories ?? {} as MessageFactories<T>;
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
         validateMissingProps(instance, data);
-        const usedData = filterExtraProps(instance, data);
-        for (const [key, value] of Object.entries(usedData)) {
-            if (value === null) {
-                throw new Error(`Null value for key '${key}'`);
-            }
-            if (typeof value !== 'object') {
-                setValue(instance, key, value);
-                continue;
-            }
-            if (key in allFactories) {
-                if (Array.isArray(value)) {
-                    const childrenInstance = value.map((child) => callMethod(allFactories, key, child));
-                    setValue(instance, key, childrenInstance);
-                } else {
-                    const childInstance = callMethod(allFactories, key, value);
-                    setValue(instance, key, childInstance);
-                }
-            } else {
-                validateMissingFactory(instance, key, value);
-                setValue(instance, key, value);
-            }
+        for (const [prop, value] of Object.entries(filterExtraProps(instance, data))) {
+            const result = getResult(allFactories, prop, value);
+            const setter = getMethod(prop);
+            callMethod(instance, setter, result);
         }
         return instance;
     };
 }
 
-function callMethod<T extends object, R>(obj: T, key: string, value: unknown): R {
-    return (obj[key as keyof T] as (value: unknown) => R)(value);
+function getResult<T extends Message>(factories: MessageFactories<T>, prop: string, value: unknown): unknown {
+    if (Array.isArray(value)) {
+        if (value.length === 0 || !isArrayOfObjects(value, prop)) {
+            return value;
+        }
+        validateMissingFactory(factories, prop);
+        return value.map((child) => callMethod(factories, prop, child));
+    }
+    if (isObject(value, prop)) {
+        validateMissingFactory(factories, prop);
+        return callMethod(factories, prop, value);
+    }
+    return value;
 }
 
- function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
-    const setter = getMethod(key);
-    callMethod<T, void>(instance, setter, value);
+function callMethod<T extends object, R>(obj: T, key: string, value: unknown): R {
+    return (obj[key as keyof T] as (value: unknown) => R)(value);
 }
 
 function getProp(key: string, prefix = SETTER_PREFIX): string {
@@ -78,13 +71,9 @@ function getMethod(prop: string, prefix = SETTER_PREFIX): string {
     return `${prefix}${prop[0].toUpperCase()}${prop.slice(1)}`;
 }
 
-function checkIfProp(key: string, prefix = SETTER_PREFIX): boolean {
-    return key.startsWith(prefix);
-}
-
 function getInstanceProps<T extends Message>(instance: T): string[] {
     return Object.keys(Object.getPrototypeOf(instance))
-        .filter((key) => checkIfProp(key))
+        .filter((key) => key.startsWith(SETTER_PREFIX))
         .map(key => getProp(key));
 }
 
@@ -108,14 +97,25 @@ function filterExtraProps<T extends Message>(instance: T, data: AsObject<T>): As
     return Object.fromEntries(Object.entries(data).filter(([key]) => instanceProps.includes(key))) as AsObject<T>;
 }
 
-function validateMissingFactory<T extends Message>(instance: T, key: string, value: unknown): void {
-    if (Array.isArray(value)) {
-        for (const v of value) {
-            validateMissingFactory(instance, key, v);
-        }
-        return;
+function validateMissingFactory<T extends Message>(factories: MessageFactories<T>, prop: string): void {
+    if (!(prop in factories)) {
+        throw new Error(`Missing factory for '${prop}'`);
     }
-    if (typeof value === 'object') {
-        throw new Error(`Missing factory for '${key}'`);
+}
+
+function isObject(value: unknown, prop: string): boolean {
+    if (value === null) {
+        throw new Error(`Null value for key '${prop}'`);
     }
+    return typeof value === 'object';
+}
+
+function isArrayOfObjects(arr: unknown[], prop: string): boolean {
+    if (arr.every((item) => isObject(item, prop))) {
+        return true;
+    }
+    if (arr.every((item) => !isObject(item, prop))) {
+        return false;
+    }
+    throw new Error(`Mixed array for '${prop}'`);
 }

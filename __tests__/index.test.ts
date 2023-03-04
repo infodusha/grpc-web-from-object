@@ -115,12 +115,21 @@ describe('createFromObject', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {} as Universe.AsObject;
         expect(() => fromUniverse(obj)).not.toThrowError(`Missing property 'planetsList'`);
+        expect(() => fromUniverse(obj)).not.toThrow();
     });
 
     it('Should throw when null value', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {
             planetsList: null,
+        } as unknown as Universe.AsObject;
+        expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
+    });
+
+    it('Should throw when null in array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: [null],
         } as unknown as Universe.AsObject;
         expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
     });
@@ -132,5 +141,23 @@ describe('createFromObject', () => {
             extra: null,
         } as Universe.AsObject;
         expect(() => fromUniverse(obj)).not.toThrowError(`Null value for key 'extra'`);
+        expect(() => fromUniverse(obj)).not.toThrow();
+    });
+
+    it('Should work with empty array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: [],
+        } satisfies Universe.AsObject;
+        const universe = fromUniverse(obj);
+        expect(universe.toObject()).toEqual(obj);
+    });
+
+    it('Should throw when mixed array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: ['Saturn', {}],
+        } as Universe.AsObject;
+        expect(() => fromUniverse(obj)).toThrowError(`Mixed array for 'planetsList'`);
     });
 });
