@@ -24,26 +24,31 @@ type MessageFactories<T extends Message> = {
 type EmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? T : never;
 type NonEmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? never : T;
 
+const SETTER_PREFIX = 'set';
+const CLEAR_PREFIX = 'clear';
 
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T>>): FromObject<T>;
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>, factories: MessageFactories<T>): FromObject<T>
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T> | NonEmptyFactory<T>>, factories?: MessageFactories<T>): FromObject<T> {
-    const allFactories = factories ?? {} as MessageFactories<T>;
+    const allFactories = factories ?? {};
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
         validateMissingProps(instance, data);
-        for (const [key, value] of Object.entries(data)) {
-            if (value === null || typeof value !== 'object') {
+        const usedData = filterExtraProps(instance, data);
+        for (const [key, value] of Object.entries(usedData)) {
+            if (value === null) {
+                throw new Error(`Null value for key '${key}'`);
+            }
+            if (typeof value !== 'object') {
                 setValue(instance, key, value);
                 continue;
             }
             if (key in allFactories) {
-                const factoryKey = key as keyof MessageFactories<T>;
                 if (Array.isArray(value)) {
-                    const childrenInstance = value.map((item) => allFactories[factoryKey](item));
+                    const childrenInstance = value.map((child) => callMethod(allFactories, key, child));
                     setValue(instance, key, childrenInstance);
                 } else {
-                    const childInstance = (allFactories[factoryKey] as (value: unknown) => T)(value);
+                    const childInstance = callMethod(allFactories, key, value);
                     setValue(instance, key, childInstance);
                 }
             } else {
@@ -55,41 +60,55 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
     };
 }
 
- function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
-    const setter = getSetter<T>(key);
-    if (setter in instance) {
-        if (value === null) {
-            throw new Error(`Null value for key '${key}'`);
-        }
-        (instance[setter] as (value: unknown) => void)(value);
-    }
+function callMethod<T extends object, R>(obj: T, key: string, value: unknown): R {
+    return (obj[key as keyof T] as (value: unknown) => R)(value);
 }
 
-type SetterKey<T extends Message> = {
-    [K in keyof T]: K extends `set${string}` ? K : never
-}[keyof T];
+ function setValue<T extends Message>(instance: T, key: string, value: unknown): void {
+    const setter = getMethod(key);
+    callMethod<T, void>(instance, setter, value);
+}
 
-function getSetter<T extends Message>(key: string): SetterKey<T> {
-    return `set${key[0].toUpperCase()}${key.slice(1)}` as SetterKey<T>;
+function getProp(key: string, prefix = SETTER_PREFIX): string {
+    const prop = key.slice(prefix.length);
+    return prop.slice(0, 1).toLowerCase() + prop.slice(1);
+}
+
+function getMethod(prop: string, prefix = SETTER_PREFIX): string {
+    return `${prefix}${prop[0].toUpperCase()}${prop.slice(1)}`;
+}
+
+function checkIfProp(key: string, prefix = SETTER_PREFIX): boolean {
+    return key.startsWith(prefix);
+}
+
+function getInstanceProps<T extends Message>(instance: T): string[] {
+    return Object.keys(Object.getPrototypeOf(instance))
+        .filter((key) => checkIfProp(key))
+        .map(key => getProp(key));
+}
+
+function isOptional<T extends Message>(instance: T, prop: string): boolean {
+    const clearMethod = getMethod(prop, CLEAR_PREFIX);
+    return clearMethod in instance;
 }
 
 function validateMissingProps<T extends Message>(instance: T, data: AsObject<T>): void {
-    const dataSetters = Object.keys(data).map((key) => getSetter<T>(key));
-    const instanceSetters = Object.keys(Object.getPrototypeOf(instance)).filter((key) => key.startsWith('set'));
-    for (const key of instanceSetters) {
-        if (!dataSetters.includes(key as SetterKey<T>) && instance['clear' + key.slice(3) as keyof T] === undefined) {
-            const prop = key.slice(3, 4).toLowerCase() + key.slice(4);
+    const instanceProps = getInstanceProps(instance);
+    const dataProps = Object.keys(data);
+    for (const prop of instanceProps) {
+        if (!dataProps.includes(prop) && !isOptional(instance, prop)) {
             throw new Error(`Missing property '${prop}'`);
         }
     }
 }
 
-function validateMissingFactory<T extends Message>(instance: T, key: string, value: unknown): void {
-    const setter = getSetter<T>(key);
-    if (!(setter in instance)) {
-        return;
-    }
+function filterExtraProps<T extends Message>(instance: T, data: AsObject<T>): AsObject<T> {
+    const instanceProps = getInstanceProps(instance);
+    return Object.fromEntries(Object.entries(data).filter(([key]) => instanceProps.includes(key))) as AsObject<T>;
+}
 
+function validateMissingFactory<T extends Message>(instance: T, key: string, value: unknown): void {
     if (Array.isArray(value)) {
         for (const v of value) {
             validateMissingFactory(instance, key, v);
