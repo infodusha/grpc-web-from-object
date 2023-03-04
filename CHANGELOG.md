@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.2...v2.2.0) (2023-03-04)
+
+
+### Features
+
+* refactor ([63189b6](https://github.com/infodusha/grpc-web-from-object/commit/63189b6de05f7392ca982df75927102dbef6ccf8))
+* refactor checks ([5d9a20d](https://github.com/infodusha/grpc-web-from-object/commit/5d9a20d95fd7698884c90e7106b458eda45796c4))
+
 ## [2.1.2](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.1...v2.1.2) (2023-03-03)
 
 
