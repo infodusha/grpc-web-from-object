@@ -24,6 +24,8 @@ type MessageFactories<T extends Message> = {
 type EmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? T : never;
 type NonEmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? never : T;
 
+const recursiveFactories = new WeakMap<MessageConstructor<Message>, MessageFactories<Message>>();
+
 const SETTER_PREFIX = 'set';
 const CLEAR_PREFIX = 'clear';
 
@@ -31,6 +33,11 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>, factories: MessageFactories<T>): FromObject<T>
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T> | NonEmptyFactory<T>>, factories?: MessageFactories<T>): FromObject<T> {
     const allFactories = factories ?? {} as MessageFactories<T>;
+    const recursiveFactory = recursiveFactories.get(MessageType);
+    if (recursiveFactory) {
+        Object.assign(recursiveFactory, allFactories);
+        recursiveFactories.delete(MessageType);
+    }
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
         validateMissingProps(instance, data);
@@ -118,4 +125,25 @@ function isArrayOfObjects(arr: unknown[], prop: string): boolean {
         return false;
     }
     throw new Error(`Mixed array for '${prop}'`);
+}
+
+
+export function createFromObjectRecursive<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>): FromObject<T> {
+    const factories = {} as MessageFactories<T>;
+    recursiveFactories.set(MessageType, factories);
+    const propertyDescriptors = Object.keys(MessageType.prototype)
+        .filter((key) => key.startsWith(SETTER_PREFIX))
+        .map(key => getProp(key) as keyof MessageFactories<T>)
+        .reduce<PropertyDescriptorMap>((acc, prop) => ({
+            ...acc,
+            [prop]: {
+                get() {
+                    validateMissingFactory(factories, prop);
+                    return factories[prop];
+                },
+            },
+        }), {});
+
+    const dynamicFactories = Object.defineProperties({}, propertyDescriptors) as MessageFactories<T>;
+    return createFromObject(MessageType, dynamicFactories);
 }

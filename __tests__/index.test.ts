@@ -1,8 +1,10 @@
-import { createFromObject } from "../src";
+import { createFromObject, createFromObjectRecursive } from "../src";
 import { BookStore } from "./test-data/generated/book-store_pb";
 import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 import { Forest, Info, Tree } from "./test-data/generated/forest_pb";
-import {Universe} from "./test-data/generated/universe_pb";
+import { Universe } from "./test-data/generated/universe_pb";
+import { MixedSpice, Spices } from "./test-data/generated/spices_pb";
+import { Newspaper } from "./test-data/generated/newspaper_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
@@ -35,34 +37,6 @@ describe('createFromObject', () => {
         } satisfies PhoneShop.AsObject;
         const phoneShop = fromPhoneShop(obj);
         expect(phoneShop.toObject()).toEqual(obj);
-    });
-
-    it('Should work with array structure', () => {
-        const fromForest = createFromObject(Forest, {
-            treesList: createFromObject(Tree),
-            info: createFromObject(Info),
-        });
-        const obj = {
-            treesList: [
-                { age: 1, height: 10 },
-                { age: 5, height: 42 },
-            ],
-            info: {
-                name: 'Forest',
-                numberOfTrees: 4000,
-            },
-        } satisfies Forest.AsObject;
-        const forest = fromForest(obj);
-        expect(forest.toObject()).toEqual(obj);
-    });
-
-    it('Should work with simple array', () => {
-        const fromUniverse = createFromObject(Universe);
-        const obj = {
-            planetsList: ['Earth', 'Mars', 'Venus'],
-        } satisfies Universe.AsObject;
-        const universe = fromUniverse(obj);
-        expect(universe.toObject()).toEqual(obj);
     });
 
     it('Should ignore extra params', () => {
@@ -126,14 +100,6 @@ describe('createFromObject', () => {
         expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
     });
 
-    it('Should throw when null in array', () => {
-        const fromUniverse = createFromObject(Universe);
-        const obj = {
-            planetsList: [null],
-        } as unknown as Universe.AsObject;
-        expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
-    });
-
     it('Should not throw when extra null value', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {
@@ -142,6 +108,56 @@ describe('createFromObject', () => {
         } as Universe.AsObject;
         expect(() => fromUniverse(obj)).not.toThrowError(`Null value for key 'extra'`);
         expect(() => fromUniverse(obj)).not.toThrow();
+    });
+
+    it('Should work with oneof rule', () => {
+        const fromNewspaper = createFromObject(Newspaper);
+        const objNews = {
+            id: 1,
+            name: 'The New York Times',
+            isAds: true,
+            isNews: true,
+            contentByPageMap: [],
+        } satisfies Newspaper.AsObject;
+        const objAds = {
+            id: 2,
+            name: 'RBK',
+            isNews: true,
+            isAds: true,
+            contentByPageMap: [],
+        } satisfies Newspaper.AsObject;
+        const newspaperNews = fromNewspaper(objNews);
+        const newspaperAds = fromNewspaper(objAds);
+        expect(newspaperNews.toObject()).toEqual({ ...objNews, isAds: false });
+        expect(newspaperAds.toObject()).toEqual({ ...objAds, isNews: false });
+    });
+
+    it.skip('Should work with map rule', () => {
+        const fromNewspaper = createFromObject(Newspaper);
+        const obj = {
+            id: 1,
+            name: 'The New York Times',
+            isAds: false,
+            isNews: true,
+            contentByPageMap: [
+                [1, 'fist page'],
+                [2, 'second page'],
+            ],
+        } satisfies Newspaper.AsObject;
+
+        const newspaper = fromNewspaper(obj);
+        expect(newspaper.toObject()).toEqual(obj);
+    });
+});
+
+describe('Repeated rule', () => {
+    it('Should work with simple array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: ['Earth', 'Mars', 'Venus'],
+        } satisfies Universe.AsObject;
+        const universe = fromUniverse(obj);
+        expect(universe.toObject()).toEqual(obj);
     });
 
     it('Should work with empty array', () => {
@@ -153,11 +169,73 @@ describe('createFromObject', () => {
         expect(universe.toObject()).toEqual(obj);
     });
 
+
+    it('Should work with array structure', () => {
+        const fromForest = createFromObject(Forest, {
+            treesList: createFromObject(Tree),
+            info: createFromObject(Info),
+        });
+        const obj = {
+            treesList: [
+                { age: 1, height: 10 },
+                { age: 5, height: 42 },
+            ],
+            info: {
+                name: 'Forest',
+                numberOfTrees: 4000,
+            },
+        } satisfies Forest.AsObject;
+        const forest = fromForest(obj);
+        expect(forest.toObject()).toEqual(obj);
+    });
+
+    it('Should throw when null in array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: [null],
+        } as unknown as Universe.AsObject;
+        expect(() => fromUniverse(obj)).toThrowError(`Null value for key 'planetsList'`);
+    });
+
     it('Should throw when mixed array', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {
             planetsList: ['Saturn', {}],
         } as Universe.AsObject;
         expect(() => fromUniverse(obj)).toThrowError(`Mixed array for 'planetsList'`);
+    });
+});
+
+describe('Recursive messages', () => {
+    it('Should work with recursive', () => {
+        const fromSpices = createFromObject(Spices, {
+            mixed: createFromObject(MixedSpice, {
+                spicesList: createFromObjectRecursive(Spices),
+            }),
+        });
+        const obj = {
+            name: 'Pork',
+            mixed: {
+                spicesList: [
+                    { name: 'Pepper' },
+                    { name: 'Salt', mixed: { spicesList: [{ name: 'Void' }] }},
+                ],
+            },
+        } satisfies Spices.AsObject;
+        const spices = fromSpices(obj);
+        expect(spices.toObject()).toEqual(obj);
+    });
+
+    it('Should throw when createFromRecursiveObject used outside', () => {
+        const fromPhoneShop = createFromObjectRecursive(PhoneShop);
+        const obj = {
+            id: 1,
+            phone: {
+                model: 'iPhone 14 Pro Max',
+                diagonal: 6.9,
+                price: 1999,
+            },
+        } satisfies PhoneShop.AsObject;
+        expect(() => fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
     });
 });

@@ -15,3 +15,5 @@ gen ./book-store.proto
 gen ./phone-shop.proto
 gen ./forest.proto
 gen ./universe.proto
+gen ./spices.proto
+gen ./newspaper.proto
