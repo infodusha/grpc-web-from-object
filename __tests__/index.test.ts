@@ -4,7 +4,7 @@ import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 import { Forest, Info, Tree } from "./test-data/generated/forest_pb";
 import { Universe } from "./test-data/generated/universe_pb";
 import { MixedSpice, Spices } from "./test-data/generated/spices_pb";
-import { Newspaper } from "./test-data/generated/newspaper_pb";
+import {Ads, Newspaper} from "./test-data/generated/newspaper_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
@@ -109,15 +109,20 @@ describe('createFromObject', () => {
         expect(() => fromUniverse(obj)).not.toThrowError(`Null value for key 'extra'`);
         expect(() => fromUniverse(obj)).not.toThrow();
     });
+});
 
+describe('Oneof rule', () => {
     it('Should work with oneof rule', () => {
-        const fromNewspaper = createFromObject(Newspaper);
+        const fromNewspaper = createFromObject(Newspaper, {
+            adsByPageMap: createFromObject(Ads),
+        });
         const objNews = {
             id: 1,
             name: 'The New York Times',
             isAds: true,
             isNews: true,
             contentByPageMap: [],
+            adsByPageMap: [],
         } satisfies Newspaper.AsObject;
         const objAds = {
             id: 2,
@@ -125,28 +130,12 @@ describe('createFromObject', () => {
             isNews: true,
             isAds: true,
             contentByPageMap: [],
+            adsByPageMap: [],
         } satisfies Newspaper.AsObject;
         const newspaperNews = fromNewspaper(objNews);
         const newspaperAds = fromNewspaper(objAds);
         expect(newspaperNews.toObject()).toEqual({ ...objNews, isAds: false });
         expect(newspaperAds.toObject()).toEqual({ ...objAds, isNews: false });
-    });
-
-    it.skip('Should work with map rule', () => {
-        const fromNewspaper = createFromObject(Newspaper);
-        const obj = {
-            id: 1,
-            name: 'The New York Times',
-            isAds: false,
-            isNews: true,
-            contentByPageMap: [
-                [1, 'fist page'],
-                [2, 'second page'],
-            ],
-        } satisfies Newspaper.AsObject;
-
-        const newspaper = fromNewspaper(obj);
-        expect(newspaper.toObject()).toEqual(obj);
     });
 });
 
@@ -218,7 +207,15 @@ describe('Recursive messages', () => {
             mixed: {
                 spicesList: [
                     { name: 'Pepper' },
-                    { name: 'Salt', mixed: { spicesList: [{ name: 'Void' }] }},
+                    {
+                        name: 'Salt',
+                        mixed: {
+                            spicesList: [{
+                                name: 'Dark',
+                                mixed: { spicesList: [{ name: 'Void' }] },
+                            }],
+                        },
+                    },
                 ],
             },
         } satisfies Spices.AsObject;
@@ -237,5 +234,47 @@ describe('Recursive messages', () => {
             },
         } satisfies PhoneShop.AsObject;
         expect(() => fromPhoneShop(obj)).toThrowError(`Missing factory for 'phone'`);
+    });
+});
+
+describe('Map rule', () => {
+    it('Should work with simple map', () => {
+        const fromNewspaper = createFromObject(Newspaper, {
+            adsByPageMap: createFromObject(Ads),
+        });
+        const obj = {
+            id: 1,
+            name: 'The New York Times',
+            isAds: false,
+            isNews: true,
+            contentByPageMap: [
+                [1, 'fist page'],
+                [2, 'second page'],
+            ],
+            adsByPageMap: [],
+        } satisfies Newspaper.AsObject;
+
+        const newspaper = fromNewspaper(obj);
+        expect(newspaper.toObject()).toEqual(obj);
+    });
+
+    it('Should work with nested type', () => {
+        const fromNewspaper = createFromObject(Newspaper, {
+            adsByPageMap: createFromObject(Ads),
+        });
+        const obj = {
+            id: 1,
+            name: 'The New York Times',
+            isAds: false,
+            isNews: true,
+            contentByPageMap: [],
+            adsByPageMap: [
+                [1, { data: 'Google' }],
+                [2, { data: 'Facebook' }],
+            ],
+        } satisfies Newspaper.AsObject;
+
+        const newspaper = fromNewspaper(obj);
+        expect(newspaper.toObject()).toEqual(obj);
     });
 });

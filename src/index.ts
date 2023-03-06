@@ -1,4 +1,4 @@
-import { Message } from "google-protobuf";
+import { Message, Map as ProtobufMap } from "google-protobuf";
 
 export type FromObject<T extends Message> = (data: AsObject<T>) => T;
 
@@ -8,17 +8,19 @@ type AsObject<T extends Message> = ReturnType<T["toObject"]>;
 
 type MessageFnReturnValue<T extends Message, Key extends keyof T> = T[Key] extends (...args: unknown[]) => infer R ? R : never;
 
+type IsProtobufMap<T> = T extends ProtobufMap<unknown, infer X> ? X : T;
+
 type IsMessageOrMessageArray<T> = T extends Array<infer R> ? IsMessageOrMessageArray<R> : T extends Message | undefined ? Exclude<T, undefined> : never;
 
 type GetMessageKeys<T extends Message> = {
-    [K in keyof T]: K extends `get${string}` ? IsMessageOrMessageArray<MessageFnReturnValue<T, K>> extends never ? never : K : never
+    [K in keyof T]: K extends `get${string}` ? IsMessageOrMessageArray<IsProtobufMap<MessageFnReturnValue<T, K>>> extends never ? never : K : never
 }[keyof T];
 
 type MessageToObjectKey<T extends string> = T extends `get${infer R}` ? Uncapitalize<R> : never;
 type AsObjectToMessageKey<R> = R extends string ? `get${Capitalize<R>}` : never;
 
 type MessageFactories<T extends Message> = {
-    [K in MessageToObjectKey<GetMessageKeys<T>>]: FromObject<IsMessageOrMessageArray<MessageFnReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>
+    [K in MessageToObjectKey<GetMessageKeys<T>>]: FromObject<IsMessageOrMessageArray<IsProtobufMap<MessageFnReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>>
 }
 
 type EmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? T : never;
@@ -27,6 +29,7 @@ type NonEmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? neve
 const recursiveFactories = new WeakMap<MessageConstructor<Message>, MessageFactories<Message>>();
 
 const SETTER_PREFIX = 'set';
+const GETTER_PREFIX = 'get';
 const CLEAR_PREFIX = 'clear';
 
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T>>): FromObject<T>;
@@ -36,12 +39,24 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
     const recursiveFactory = recursiveFactories.get(MessageType);
     if (recursiveFactory) {
         Object.assign(recursiveFactory, allFactories);
-        recursiveFactories.delete(MessageType);
     }
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
         validateMissingProps(instance, data);
         for (const [prop, value] of Object.entries(filterExtraProps(instance, data))) {
+            if (Array.isArray(value) && isProtobufMap(instance, prop)) {
+                const mapMethod = getMethod(prop, GETTER_PREFIX);
+                const map = callMethod(instance, mapMethod) as ProtobufMap<unknown, unknown>;
+                for (const [k, v] of value) {
+                    if(!isObject(v, prop)) {
+                        map.set(k, v);
+                        continue;
+                    }
+                    validateMissingFactory(allFactories, prop);
+                    map.set(k, callMethod(allFactories, prop, v));
+                }
+                continue;
+            }
             const result = getResult(allFactories, prop, value);
             const setter = getMethod(prop);
             callMethod(instance, setter, result);
@@ -65,7 +80,7 @@ function getResult<T extends Message>(factories: MessageFactories<T>, prop: stri
     return value;
 }
 
-function callMethod<T extends object, R>(obj: T, key: string, value: unknown): R {
+function callMethod<T extends object, R>(obj: T, key: string, value?: unknown): R {
     return (obj[key as keyof T] as (value: unknown) => R)(value);
 }
 
@@ -79,9 +94,19 @@ function getMethod(prop: string, prefix = SETTER_PREFIX): string {
 }
 
 function getInstanceProps<T extends Message>(instance: T): string[] {
-    return Object.keys(Object.getPrototypeOf(instance))
+    const keys = Object.keys(Object.getPrototypeOf(instance));
+    const setters = keys
         .filter((key) => key.startsWith(SETTER_PREFIX))
         .map(key => getProp(key));
+    const maps = keys
+        .filter((key) => key.startsWith(CLEAR_PREFIX))
+        .map(key => getProp(key, CLEAR_PREFIX))
+        .filter(prop => isProtobufMap(instance, prop));
+    return [...setters, ...maps];
+}
+
+function isProtobufMap<T extends Message>(instance: T, prop: string): boolean {
+    return callMethod(instance, getMethod(prop, GETTER_PREFIX)) instanceof ProtobufMap;
 }
 
 function isOptional<T extends Message>(instance: T, prop: string): boolean {
@@ -104,7 +129,7 @@ function filterExtraProps<T extends Message>(instance: T, data: AsObject<T>): As
     return Object.fromEntries(Object.entries(data).filter(([key]) => instanceProps.includes(key))) as AsObject<T>;
 }
 
-function validateMissingFactory<T extends Message>(factories: MessageFactories<T>, prop: string): void {
+function validateMissingFactory<T extends Message>(factories: MessageFactories<T>, prop: string): asserts prop is keyof MessageFactories<T> {
     if (!(prop in factories)) {
         throw new Error(`Missing factory for '${prop}'`);
     }
@@ -131,9 +156,7 @@ function isArrayOfObjects(arr: unknown[], prop: string): boolean {
 export function createFromObjectRecursive<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>): FromObject<T> {
     const factories = {} as MessageFactories<T>;
     recursiveFactories.set(MessageType, factories);
-    const propertyDescriptors = Object.keys(MessageType.prototype)
-        .filter((key) => key.startsWith(SETTER_PREFIX))
-        .map(key => getProp(key) as keyof MessageFactories<T>)
+    const propertyDescriptors = getInstanceProps(new MessageType())
         .reduce<PropertyDescriptorMap>((acc, prop) => ({
             ...acc,
             [prop]: {
