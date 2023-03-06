@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.2.0...v2.3.0) (2023-03-06)
+
+
+### Features
+
+* createFromObjectRecursive ([7a7de77](https://github.com/infodusha/grpc-web-from-object/commit/7a7de7764342b963be327d93a78fc9766c1dcc16))
+* support for maps ([098163e](https://github.com/infodusha/grpc-web-from-object/commit/098163ec9b3bdc286a539c894ebaac9ea8b61e4a))
+* tsd ([d12112d](https://github.com/infodusha/grpc-web-from-object/commit/d12112dd8ca0dda2501b3d5abaf1f2e1f5df7f9b))
+
 ## [2.2.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.1.2...v2.2.0) (2023-03-04)
 
 
