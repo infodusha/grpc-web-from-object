@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.3.0...v2.4.0) (2023-03-09)
+
+
+### Features
+
+* validation ([905371a](https://github.com/infodusha/grpc-web-from-object/commit/905371a9f8eedc6666fedd128141aebd88069d46))
+
 ## [2.3.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.2.0...v2.3.0) (2023-03-06)
 
 
