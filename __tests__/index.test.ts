@@ -139,6 +139,47 @@ describe('Oneof rule', () => {
     });
 });
 
+describe('Validation', () => {
+    it('Should validate simple type', () => {
+        const fromBookStore = createFromObject(BookStore);
+        const obj = {
+            name: 'Harry Potter',
+            shelf: 'second',
+        } as unknown as BookStore.AsObject;
+        expect(() => fromBookStore(obj)).toThrowError(`Invalid type for 'shelf' (expected 'number', got 'string')`);
+    });
+
+    it('Should validate nested structure', () => {
+        const fromPhoneShop = createFromObject(PhoneShop, {
+            phone: createFromObject(Phone, {
+                company: createFromObject(Company),
+            }),
+        });
+        const obj = {
+            id: 1,
+            phone: 123,
+        } as unknown as PhoneShop.AsObject;
+        expect(() => fromPhoneShop(obj)).toThrowError(`Invalid type for 'phone' (expected 'object', got 'number')`);
+    });
+
+    it('Should validate simple array', () => {
+        const fromUniverse = createFromObject(Universe);
+        const obj = {
+            planetsList: true,
+        } as unknown as Universe.AsObject;
+        expect(() => fromUniverse(obj)).toThrowError(`Invalid type for 'planetsList' (expected array, got 'boolean')`);
+    });
+
+    it('Should validate simple false array', () => {
+        const fromBookStore = createFromObject(BookStore);
+        const obj = {
+            name: 'Gary Garrison',
+            shelf: [4, 2],
+        } as unknown as BookStore.AsObject;
+        expect(() => fromBookStore(obj)).toThrowError(`Invalid type for 'shelf' (expected 'number', got array)`);
+    });
+});
+
 describe('Repeated rule', () => {
     it('Should work with simple array', () => {
         const fromUniverse = createFromObject(Universe);

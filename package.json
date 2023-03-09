@@ -7,7 +7,7 @@
     "build": "tsc",
     "test": "npm run test:unit && npm run test:types",
     "test:unit": "jest",
-    "test:types": "npm run build && npx tsd -f ./__tests__/index.test-d.ts -t ./lib/index.d.ts",
+    "test:types": "npx tsd -f ./__tests__/index.test-d.ts -t ./lib/index.d.ts",
     "lint": "eslint .",
     "generate": "sh ./__tests__/test-data/generate.sh"
   },

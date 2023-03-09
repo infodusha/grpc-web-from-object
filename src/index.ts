@@ -37,8 +37,9 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T> | NonEmptyFactory<T>>, factories?: MessageFactories<T>): FromObject<T> {
     const allFactories = factories ?? {} as MessageFactories<T>;
     const recursiveFactory = recursiveFactories.get(MessageType);
-    if (recursiveFactory) {
+    if (recursiveFactory && Object.keys(allFactories).length > 0) {
         Object.assign(recursiveFactory, allFactories);
+        recursiveFactories.delete(MessageType);
     }
     return (data: AsObject<T>): T => {
         const instance = new MessageType();
@@ -58,6 +59,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
                 continue;
             }
             const result = getResult(allFactories, prop, value);
+            validateType(instance, prop, value);
             const setter = getMethod(prop);
             callMethod(instance, setter, result);
         }
@@ -93,15 +95,16 @@ function getMethod(prop: string, prefix = SETTER_PREFIX): string {
     return `${prefix}${prop[0].toUpperCase()}${prop.slice(1)}`;
 }
 
+function getInstancePropsFromKeys(keys: string[], prefix: string): string[] {
+    return keys
+        .filter((key) => key.startsWith(prefix))
+        .map(key => getProp(key, prefix));
+}
+
 function getInstanceProps<T extends Message>(instance: T): string[] {
     const keys = Object.keys(Object.getPrototypeOf(instance));
-    const setters = keys
-        .filter((key) => key.startsWith(SETTER_PREFIX))
-        .map(key => getProp(key));
-    const maps = keys
-        .filter((key) => key.startsWith(CLEAR_PREFIX))
-        .map(key => getProp(key, CLEAR_PREFIX))
-        .filter(prop => isProtobufMap(instance, prop));
+    const setters = getInstancePropsFromKeys(keys, SETTER_PREFIX);
+    const maps = getInstancePropsFromKeys(keys, CLEAR_PREFIX).filter(prop => isProtobufMap(instance, prop));
     return [...setters, ...maps];
 }
 
@@ -152,6 +155,21 @@ function isArrayOfObjects(arr: unknown[], prop: string): boolean {
     throw new Error(`Mixed array for '${prop}'`);
 }
 
+function validateType<T extends Message>(instance: T, prop: string, value: unknown): void {
+    const getter = getMethod(prop, GETTER_PREFIX);
+    const instanceValue = callMethod(instance, getter);
+    const expectedType = instanceValue !== undefined ? typeof instanceValue : 'object';
+    const actualType = typeof value;
+    if (Array.isArray(instanceValue) && !Array.isArray(value)) {
+        throw new Error(`Invalid type for '${prop}' (expected array, got '${actualType}')`);
+    }
+    if (!Array.isArray(instanceValue) && Array.isArray(value)) {
+        throw new Error(`Invalid type for '${prop}' (expected '${expectedType}', got array)`);
+    }
+    if (expectedType !== actualType) {
+        throw new Error(`Invalid type for '${prop}' (expected '${expectedType}', got '${actualType}')`);
+    }
+}
 
 export function createFromObjectRecursive<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>): FromObject<T> {
     const factories = {} as MessageFactories<T>;
