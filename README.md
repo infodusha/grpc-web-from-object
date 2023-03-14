@@ -3,6 +3,16 @@ fromObject method for grpc-web
 
 In general that is opposite for 'toObject' method in protobufjs.
 
+### Supports:
+* Simple keys
+* Repeated
+* OneOf
+* Protobuf Map
+* Recursive messages
+* Type validation (at runtime)
+* TypeScript
+* Missing keys validation
+
 ## Installation
 `npm i grpc-web-from-object`
 
@@ -23,6 +33,16 @@ const myMessage = fromMyMessage({
         keyA: 2,
         keyB: 'bar',
     },
+});
+```
+
+#### For recursive message:
+```typescript
+import { createFromObject, createFromObjectRecursive } from 'grpc-web-from-object';
+import { MyMessage } from './my-message_pb';
+
+const fromMyMessage = createFromObject(MyMessage, {
+    message: createFromObjectRecursive(MyMessage),
 });
 ```
 
