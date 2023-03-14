@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.4.0...v2.4.1) (2023-03-14)
+
+
+### Bug Fixes
+
+* allow explicit undefined ([1d051a3](https://github.com/infodusha/grpc-web-from-object/commit/1d051a3d1302b4fed4c707806eac065357b2684d))
+
 ## [2.4.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.3.0...v2.4.0) (2023-03-09)
 
 
