@@ -162,6 +162,19 @@ describe('Validation', () => {
         expect(() => fromPhoneShop(obj)).toThrowError(`Invalid type for 'phone' (expected 'object', got 'number')`);
     });
 
+    it('Should not throw on undefined objects', () => {
+        const fromPhoneShop = createFromObject(PhoneShop, {
+            phone: createFromObject(Phone, {
+                company: createFromObject(Company),
+            }),
+        });
+        const obj = {
+            id: 1,
+            phone: undefined,
+        } satisfies PhoneShop.AsObject;
+        expect(() => fromPhoneShop(obj)).not.toThrow();
+    });
+
     it('Should validate simple array', () => {
         const fromUniverse = createFromObject(Universe);
         const obj = {

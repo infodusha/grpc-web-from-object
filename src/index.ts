@@ -129,7 +129,7 @@ function validateMissingProps<T extends Message>(instance: T, data: AsObject<T>)
 
 function filterExtraProps<T extends Message>(instance: T, data: AsObject<T>): AsObject<T> {
     const instanceProps = getInstanceProps(instance);
-    return Object.fromEntries(Object.entries(data).filter(([key]) => instanceProps.includes(key))) as AsObject<T>;
+    return Object.fromEntries(Object.entries(data).filter(([key, value]) => instanceProps.includes(key) && value !== undefined)) as AsObject<T>;
 }
 
 function validateMissingFactory<T extends Message>(factories: MessageFactories<T>, prop: string): asserts prop is keyof MessageFactories<T> {
