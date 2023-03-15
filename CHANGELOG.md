@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.4.1...v2.5.0) (2023-03-15)
+
+
+### Features
+
+* refactor types a bit & make prefix enum ([2838600](https://github.com/infodusha/grpc-web-from-object/commit/2838600ad0f2b135ad19f8cf68cb0d3327f5bf5e))
+
 ## [2.4.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.4.0...v2.4.1) (2023-03-14)
 
 
