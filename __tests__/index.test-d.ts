@@ -1,7 +1,7 @@
 import { createFromObject } from "../lib";
 import { BookStore } from "./test-data/generated/book-store_pb";
 import { expectError, expectType } from "tsd";
-import {Company, Phone, PhoneShop} from "./test-data/generated/phone-shop_pb";
+import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 
 expectType<(data: BookStore.AsObject) => BookStore>(createFromObject(BookStore));
 expectError(createFromObject(BookStore, { extra: () => BookStore }));

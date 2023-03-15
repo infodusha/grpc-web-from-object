@@ -12,25 +12,26 @@ type IsProtobufMap<T> = T extends ProtobufMap<unknown, infer X> ? X : T;
 
 type IsMessageOrMessageArray<T> = T extends Array<infer R> ? IsMessageOrMessageArray<R> : T extends Message | undefined ? Exclude<T, undefined> : never;
 
-type GetMessageKeys<T extends Message> = {
-    [K in keyof T]: K extends `get${string}` ? IsMessageOrMessageArray<IsProtobufMap<MessageFnReturnValue<T, K>>> extends never ? never : K : never
-}[keyof T];
+type MessageValue<T extends Message, K extends keyof T> = IsMessageOrMessageArray<IsProtobufMap<MessageFnReturnValue<T, K>>>;
 
-type MessageToObjectKey<T extends string> = T extends `get${infer R}` ? Uncapitalize<R> : never;
-type AsObjectToMessageKey<R> = R extends string ? `get${Capitalize<R>}` : never;
+type MessageKey<T extends Message, K extends keyof T = keyof T> = K extends `get${string}` ? MessageValue<T, K> extends never ? never : K : never;
+
+type Prop<K> = K extends `get${infer R}` ? Uncapitalize<R> : never;
 
 type MessageFactories<T extends Message> = {
-    [K in MessageToObjectKey<GetMessageKeys<T>>]: FromObject<IsMessageOrMessageArray<IsProtobufMap<MessageFnReturnValue<T, AsObjectToMessageKey<K> extends keyof T ? AsObjectToMessageKey<K> : never>>>>
+    [K in MessageKey<T> as Prop<K>]: FromObject<MessageValue<T, K>>
 }
 
-type EmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? T : never;
-type NonEmptyFactory<T extends Message> = GetMessageKeys<T> extends never ? never : T;
+type EmptyFactory<T extends Message> = MessageKey<T> extends never ? T : never;
+type NonEmptyFactory<T extends Message> = MessageKey<T> extends never ? never : T;
 
 const recursiveFactories = new WeakMap<MessageConstructor<Message>, MessageFactories<Message>>();
 
-const SETTER_PREFIX = 'set';
-const GETTER_PREFIX = 'get';
-const CLEAR_PREFIX = 'clear';
+const enum PREFIX {
+    SET = 'set',
+    GET = 'get',
+    CLEAR = 'clear',
+}
 
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<EmptyFactory<T>>): FromObject<T>;
 export function createFromObject<T extends Message>(MessageType: MessageConstructor<NonEmptyFactory<T>>, factories: MessageFactories<T>): FromObject<T>
@@ -46,7 +47,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
         validateMissingProps(instance, data);
         for (const [prop, value] of Object.entries(filterExtraProps(instance, data))) {
             if (Array.isArray(value) && isProtobufMap(instance, prop)) {
-                const mapMethod = getMethod(prop, GETTER_PREFIX);
+                const mapMethod = getMethod(prop, PREFIX.GET);
                 const map = callMethod(instance, mapMethod) as ProtobufMap<unknown, unknown>;
                 for (const [k, v] of value) {
                     if(!isObject(v, prop)) {
@@ -60,7 +61,7 @@ export function createFromObject<T extends Message>(MessageType: MessageConstruc
             }
             const result = getResult(allFactories, prop, value);
             validateType(instance, prop, value);
-            const setter = getMethod(prop);
+            const setter = getMethod(prop, PREFIX.SET);
             callMethod(instance, setter, result);
         }
         return instance;
@@ -86,16 +87,16 @@ function callMethod<T extends object, R>(obj: T, key: string, value?: unknown): 
     return (obj[key as keyof T] as (value: unknown) => R)(value);
 }
 
-function getProp(key: string, prefix = SETTER_PREFIX): string {
+function getProp(key: string, prefix: PREFIX): string {
     const prop = key.slice(prefix.length);
     return prop.slice(0, 1).toLowerCase() + prop.slice(1);
 }
 
-function getMethod(prop: string, prefix = SETTER_PREFIX): string {
+function getMethod(prop: string, prefix: PREFIX): string {
     return `${prefix}${prop[0].toUpperCase()}${prop.slice(1)}`;
 }
 
-function getInstancePropsFromKeys(keys: string[], prefix: string): string[] {
+function getInstancePropsFromKeys(keys: string[], prefix: PREFIX): string[] {
     return keys
         .filter((key) => key.startsWith(prefix))
         .map(key => getProp(key, prefix));
@@ -103,17 +104,17 @@ function getInstancePropsFromKeys(keys: string[], prefix: string): string[] {
 
 function getInstanceProps<T extends Message>(instance: T): string[] {
     const keys = Object.keys(Object.getPrototypeOf(instance));
-    const setters = getInstancePropsFromKeys(keys, SETTER_PREFIX);
-    const maps = getInstancePropsFromKeys(keys, CLEAR_PREFIX).filter(prop => isProtobufMap(instance, prop));
+    const setters = getInstancePropsFromKeys(keys, PREFIX.SET);
+    const maps = getInstancePropsFromKeys(keys, PREFIX.CLEAR).filter(prop => isProtobufMap(instance, prop));
     return [...setters, ...maps];
 }
 
 function isProtobufMap<T extends Message>(instance: T, prop: string): boolean {
-    return callMethod(instance, getMethod(prop, GETTER_PREFIX)) instanceof ProtobufMap;
+    return callMethod(instance, getMethod(prop, PREFIX.GET)) instanceof ProtobufMap;
 }
 
 function isOptional<T extends Message>(instance: T, prop: string): boolean {
-    const clearMethod = getMethod(prop, CLEAR_PREFIX);
+    const clearMethod = getMethod(prop, PREFIX.CLEAR);
     return clearMethod in instance;
 }
 
@@ -156,7 +157,7 @@ function isArrayOfObjects(arr: unknown[], prop: string): boolean {
 }
 
 function validateType<T extends Message>(instance: T, prop: string, value: unknown): void {
-    const getter = getMethod(prop, GETTER_PREFIX);
+    const getter = getMethod(prop, PREFIX.GET);
     const instanceValue = callMethod(instance, getter);
     const expectedType = instanceValue !== undefined ? typeof instanceValue : 'object';
     const actualType = typeof value;
