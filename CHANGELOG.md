@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.5.0...v2.6.0) (2023-05-16)
+
+
+### Features
+
+* enable npm provenance ([fe3dd34](https://github.com/infodusha/grpc-web-from-object/commit/fe3dd3453d7fe836411af3ea8641b50a6e3002e2))
+
 ## [2.5.0](https://github.com/infodusha/grpc-web-from-object/compare/v2.4.1...v2.5.0) (2023-03-15)
 
 
