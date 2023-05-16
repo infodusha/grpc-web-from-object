@@ -4,7 +4,7 @@ import { Company, Phone, PhoneShop } from "./test-data/generated/phone-shop_pb";
 import { Forest, Info, Tree } from "./test-data/generated/forest_pb";
 import { Universe } from "./test-data/generated/universe_pb";
 import { MixedSpice, Spices } from "./test-data/generated/spices_pb";
-import {Ads, Newspaper} from "./test-data/generated/newspaper_pb";
+import { Ads, Newspaper } from "./test-data/generated/newspaper_pb";
 
 describe('createFromObject', () => {
     it('Should work with easy structure', () => {
