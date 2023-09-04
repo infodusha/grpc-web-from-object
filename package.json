@@ -1,6 +1,6 @@
 {
   "name": "grpc-web-from-object",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "fromObject method for grpc-web",
   "main": "lib/index.js",
   "scripts": {
