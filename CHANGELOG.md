@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.2](https://github.com/infodusha/grpc-web-from-object/compare/v2.6.1...v2.6.2) (2023-09-04)
+
+
+### Bug Fixes
+
+* add deprecation warning ([3eb5a51](https://github.com/infodusha/grpc-web-from-object/commit/3eb5a5168c0f7845a1f9b003851f2543db4ed8c7))
+
 ## [2.6.1](https://github.com/infodusha/grpc-web-from-object/compare/v2.6.0...v2.6.1) (2023-05-16)
 
 
