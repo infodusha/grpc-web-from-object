@@ -1,3 +1,6 @@
+# ⛔️ DEPRECATED
+Use [from-protobuf-object](https://github.com/infodusha/from-protobuf-object) instead.
+
 # grpc-web-from-object
 fromObject method for grpc-web
 
